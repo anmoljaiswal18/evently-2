@@ -39,7 +39,7 @@ export default function AuthPage({ onAuthSuccess }) {
                         });
                     }
                     // Navigate to main page after successful registration
-                    navigate("/main");
+                    navigate("/");
                 }
                 else {
                     alert("❌ Error: " + result.error);
@@ -58,7 +58,7 @@ export default function AuthPage({ onAuthSuccess }) {
                     });
                 }
                 // Navigate to main page after successful login
-                navigate("/main");
+                navigate("/");
             }
         }
         catch (err) {

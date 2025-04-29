@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 
 interface EventData {
   name: string;
@@ -7,14 +7,19 @@ interface EventData {
   price: number;
   startDate: string;
   endDate: string;
-  image: string; // 🔄 now it's a base64 string
   city: string;
   state: string;
-  interest: string;
+  tag: string;
+  bannerImage: string; // base64 string
+}
+
+interface SubmitMessage {
+  type: string;
+  text: string;
 }
 
 export default function EventUpload() {
-  const [formData, setFormData] = useState<Omit<EventData, "image">>({
+  const [formData, setFormData] = useState<EventData>({
     name: "",
     description: "",
     price: 0,
@@ -22,12 +27,23 @@ export default function EventUpload() {
     endDate: "",
     city: "",
     state: "",
-    interest: "",
+    tag: "music", // Default tag
+    bannerImage: "", // Empty string as default
   });
 
-  const [imageBase64, setImageBase64] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitMessage, setSubmitMessage] = useState<SubmitMessage>({ type: "", text: "" });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Available event tags
+  const eventTags: string[] = [
+    "music", "holi", "diwali", "birthday", 
+    "aarti", "darshan", "festival", "concert", 
+    "conference", "workshop", "sports", "cultural"
+  ];
+
+  // Handle input changes for text and number fields
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -35,48 +51,70 @@ export default function EventUpload() {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file upload for banner image
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
+        // Make sure reader.result is string before assigning
         const base64String = reader.result as string;
-        setImageBase64(base64String);
+        setFormData(prev => ({ 
+          ...prev, 
+          bannerImage: base64String 
+        }));
+        setImagePreview(base64String);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Handle form submission
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-
-    const dataToSend: EventData = {
-      ...formData,
-      image: imageBase64,
-    };
-
+    setIsSubmitting(true);
+    
     try {
+      // API call
       const res = await fetch("/api/uploadEvent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(formData),
       });
 
       const result = await res.json();
 
       if (res.ok) {
-        alert("✅ " + result.message);
+        setSubmitMessage({ type: "success", text: "✅ " + result.message });
+        
+        // Reset form after successful submission
+        setFormData({
+          name: "",
+          description: "",
+          price: 0,
+          startDate: "",
+          endDate: "",
+          city: "",
+          state: "",
+          tag: "music",
+          bannerImage: ""
+        });
+        setImagePreview("");
       } else {
-        alert("❌ Upload failed: " + result.error);
+        setSubmitMessage({ type: "error", text: "❌ Upload failed: " + result.error });
       }
     } catch (error) {
       console.error("Error uploading event:", error);
-      alert("❌ Error uploading event.");
+      setSubmitMessage({ type: "error", text: "❌ Error uploading event." });
+    } finally {
+      setIsSubmitting(false);
+      // Clear message after 5 seconds
+      setTimeout(() => setSubmitMessage({ type: "", text: "" }), 5000);
     }
   };
 
   return (
-    <div className="relative overflow-hidden w-full h-screen flex justify-center items-center">
+    <div className="relative overflow-auto w-full min-h-screen flex justify-center items-center py-8 mt-10">
       {/* Video Background */}
       <video
         autoPlay
@@ -87,143 +125,225 @@ export default function EventUpload() {
         <source src="/images/invideo.mp4" type="video/mp4" />
       </video>
 
-      <form 
-        onSubmit={handleSubmit} 
-        className="bg-blue-400 p-6 shadow-lg rounded-lg w-full max-w-lg z-10 mt-2 mb-2"
-      >
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-          Upload Your Event
-        </h2>
-
-        {/* Event Name */}
-        <div className="mb-4">
-          <label className="block text-black">Event Name</label>
-          <input 
-            type="text" 
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-            placeholder="Enter event name"
-            required
-          />
+      <div className="max-w-3xl w-full z-10 px-4">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white">Create Your Event</h1>
+          <p className="text-gray-200 mt-2">Fill in the details to share your event with others</p>
         </div>
 
-        {/* Description */}
-        <div className="mb-4">
-          <label className="block text-gray-700">Event Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-            placeholder="Enter event description"
-            required
-          />
-        </div>
-
-        {/* Price */}
-        <div className="mb-4">
-          <label className="block text-gray-700">Price (₹)</label>
-          <input
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-            placeholder="Enter event price"
-            required
-          />
-        </div>
-
-        {/* Start & End Date in Same Line */}
-        <div className="mb-4 flex space-x-4">
-          <div className="w-1/2">
-            <label className="block text-gray-700">Start Date</label>
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              required
-            />
+        {/* Form Card */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden">
+          {/* Banner Preview */}
+          <div className="h-52 bg-gradient-to-r from-blue-500/20 to-purple-500/20 relative flex items-center justify-center">
+            {imagePreview ? (
+              <img 
+                src={imagePreview} 
+                alt="Event banner preview" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-center text-blue-600">
+                <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4V5h12v10z" clipRule="evenodd" />
+                  <path d="M8.5 7a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                  <path fillRule="evenodd" d="M4 15h12l-3.5-5-2.5 3-2-2.5L4 15z" clipRule="evenodd" />
+                </svg>
+                <p className="font-medium">Your event banner will appear here</p>
+              </div>
+            )}
           </div>
-          <div className="w-1/2">
-            <label className="block text-gray-700">End Date</label>
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              required
-            />
-          </div>
-        </div>
 
-        {/* State & City in Same Line */}
-        <div className="mb-4 flex space-x-4">
-          <div className="w-1/2">
-            <label className="block text-gray-700">State</label>
-            <input
-              type="text"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              placeholder="Enter state"
-              required
-            />
-          </div>
-          <div className="w-1/2">
-            <label className="block text-gray-700">City</label>
-            <input
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              placeholder="Enter city"
-              required
-            />
-          </div>
-        </div>
+          {/* Form Content */}
+          <form onSubmit={handleSubmit} className="p-6">
+            {/* Success/Error Message */}
+            {submitMessage.text && (
+              <div className={`mb-4 p-3 rounded-lg text-center ${
+                submitMessage.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              }`}>
+                {submitMessage.text}
+              </div>
+            )}
 
-        {/* Interest/Category */}
-        <div className="mb-4">
-          <label className="block text-gray-700">Interest/Category</label>
-          <input
-            type="text"
-            name="interest"
-            value={formData.interest}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-            placeholder="E.g. Music, Tech, Sports"
-            required
-          />
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Event Name */}
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Event Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border border-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                  placeholder="Enter a catchy name for your event"
+                  required
+                />
+              </div>
 
-        {/* File Upload */}
-        <div className="mb-4">
-          <label className="block text-gray-700">Event Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-            required
-          />
-        </div>
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Describe your event, activities, highlights, etc."
+                  required
+                />
+              </div>
 
-        {/* Submit Button */}
-        <button 
-          type="submit" 
-          className="w-full bg-yellow-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition"
-        >
-          Upload Event
-        </button>
-      </form>
+              {/* Dates */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Price (₹)
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  min="0"
+                  step="1"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0 for free events"
+                  required
+                />
+              </div>
+
+              {/* Tag Selection */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Event Tag
+                </label>
+                <select
+                  name="tag"
+                  value={formData.tag}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  {eventTags.map(tag => (
+                    <option key={tag} value={tag}>
+                      {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  State
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="State"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  City
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="City"
+                  required
+                />
+              </div>
+
+              {/* Event Banner */}
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Event Banner
+                </label>
+                <div className="border-2 border-dashed border-black text-black rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="banner-upload"
+                    required={!imagePreview}
+                  />
+                  <label htmlFor="banner-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="mt-2 text-gray-600">Click to upload event banner</span>
+                    <span className="text-xs text-gray-500 mt-1">JPG, PNG or GIF (Max 5MB)</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="mt-8">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-medium text-lg hover:from-blue-700 hover:to-purple-700 transition duration-300 shadow-md flex items-center justify-center"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  "Create Event"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

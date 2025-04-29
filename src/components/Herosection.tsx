@@ -1,8 +1,48 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRegistration } from "../context/RegistrationContext";
+
+// Define user type
+type User = {
+  userId?: string;
+  name?: string;
+  email: string;
+};
 
 export default function Herosection() {
   const { openRegistration } = useRegistration();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  
+  // Check for authenticated user on component mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Handle list event button click
+  const handleListEvent = () => {
+    if (user) {
+      // User is logged in, navigate to event upload page
+      navigate("/event-upload");
+    } else {
+      // User is not logged in, open registration modal
+      openRegistration();
+    }
+  };
+
+  // Handle find ticket button click
+  const handleFindTicket = () => {
+    if (user) {
+      // User is logged in, navigate to ticket view page
+      navigate("/ticket-view");
+    } else {
+      // User is not logged in, open registration modal
+      openRegistration();
+    }
+  };
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex items-center justify-center">
@@ -32,13 +72,13 @@ export default function Herosection() {
 
         <div className="mt-6 flex justify-center space-x-4">
           <button
-            onClick={openRegistration}
+            onClick={handleListEvent}
             className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-blue-800 hover:text-white"
           >
             List Your Event
           </button>
           <button
-            onClick={openRegistration}
+            onClick={handleFindTicket}
             className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-blue-800 hover:text-white"
           >
             Find Your Ticket

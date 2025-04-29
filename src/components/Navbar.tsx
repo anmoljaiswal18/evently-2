@@ -87,10 +87,7 @@ const Navbar = () => {
           ) : (
             <>
               <button onClick={openRegistration} className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-blue-800 hover:text-white">
-                List Your Event
-              </button>
-              <button onClick={openRegistration} className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-blue-800 hover:text-white">
-                Find Your Event
+                Login/SignUp
               </button>
             </>
           )}
@@ -131,10 +128,7 @@ const Navbar = () => {
             ) : (
               <>
                 <button onClick={openRegistration} className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-blue-800 hover:text-white">
-                  List Your Event
-                </button>
-                <button onClick={openRegistration} className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-blue-800 hover:text-white">
-                  Find Your Event
+                  Login/SignUp
                 </button>
               </>
             )}
