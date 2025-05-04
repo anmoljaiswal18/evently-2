@@ -47,7 +47,7 @@ export default function EventUpload() {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "price" ? Number(value) : value,
+      [name]: name === "price" ? Math.max(0, Number(value)) : value, // Prevent negative price
     }));
   };
 
@@ -56,8 +56,18 @@ export default function EventUpload() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
+      
+      // Validate file type and size
+      if (!["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
+        setSubmitMessage({ type: "error", text: "❌ Only JPG, PNG, and GIF files are allowed." });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setSubmitMessage({ type: "error", text: "❌ File size must be less than 5MB." });
+        return;
+      }
+
       reader.onloadend = () => {
-        // Make sure reader.result is string before assigning
         const base64String = reader.result as string;
         setFormData(prev => ({ 
           ...prev, 
@@ -75,43 +85,54 @@ export default function EventUpload() {
     setIsSubmitting(true);
     
     try {
-      // API call
-      const res = await fetch("/api/uploadEvent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+        const res = await fetch("/api/event-upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+        });
 
-      const result = await res.json();
+        // Check if the response is OK (status 2xx)
+        if (!res.ok) {
+            // If the server responds with an error status (non-2xx), show an error message
+            setSubmitMessage({ type: "error", text: `❌ Error: ${res.statusText}` });
+            return;
+        }
 
-      if (res.ok) {
+        // Try parsing the response as JSON only if it's a valid response
+        const result = await res.json().catch((error) => {
+            // If parsing the response as JSON fails, handle the error
+            setSubmitMessage({ type: "error", text: "❌ Invalid response format." });
+            throw error;  // Rethrow the error to stop further execution
+        });
+
+        // Handle the successful response
         setSubmitMessage({ type: "success", text: "✅ " + result.message });
-        
+
         // Reset form after successful submission
         setFormData({
-          name: "",
-          description: "",
-          price: 0,
-          startDate: "",
-          endDate: "",
-          city: "",
-          state: "",
-          tag: "music",
-          bannerImage: ""
+            name: "",
+            description: "",
+            price: 0,
+            startDate: "",
+            endDate: "",
+            city: "",
+            state: "",
+            tag: "music",
+            bannerImage: ""
         });
         setImagePreview("");
-      } else {
-        setSubmitMessage({ type: "error", text: "❌ Upload failed: " + result.error });
-      }
+
     } catch (error) {
-      console.error("Error uploading event:", error);
-      setSubmitMessage({ type: "error", text: "❌ Error uploading event." });
+        console.error("Error uploading event:", error);
+        // Display a generic error message if something goes wrong
+        setSubmitMessage({ type: "error", text: "❌ Error uploading event." });
     } finally {
-      setIsSubmitting(false);
-      // Clear message after 5 seconds
-      setTimeout(() => setSubmitMessage({ type: "", text: "" }), 5000);
+        setIsSubmitting(false);
+        setTimeout(() => setSubmitMessage({ type: "", text: "" }), 5000);
     }
-  };
+};
+
+  
 
   return (
     <div className="relative overflow-auto w-full min-h-screen flex justify-center items-center py-8 mt-10">
@@ -276,7 +297,7 @@ export default function EventUpload() {
                   value={formData.state}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="State"
+                  placeholder="Enter state"
                   required
                 />
               </div>
@@ -291,56 +312,33 @@ export default function EventUpload() {
                   value={formData.city}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="City"
+                  placeholder="Enter city"
                   required
                 />
               </div>
 
-              {/* Event Banner */}
+              {/* Image Upload */}
               <div className="md:col-span-2">
                 <label className="block text-gray-700 font-medium mb-2">
-                  Event Banner
+                  Event Banner Image
                 </label>
-                <div className="border-2 border-dashed border-black text-black rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="banner-upload"
-                    required={!imagePreview}
-                  />
-                  <label htmlFor="banner-upload" className="cursor-pointer flex flex-col items-center justify-center">
-                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span className="mt-2 text-gray-600">Click to upload event banner</span>
-                    <span className="text-xs text-gray-500 mt-1">JPG, PNG or GIF (Max 5MB)</span>
-                  </label>
-                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             </div>
 
             {/* Submit Button */}
-            <div className="mt-8">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-medium text-lg hover:from-blue-700 hover:to-purple-700 transition duration-300 shadow-md flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  "Create Event"
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full mt-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
+            >
+              {isSubmitting ? "Submitting..." : "Upload Event"}
+            </button>
           </form>
         </div>
       </div>

@@ -4,7 +4,7 @@ import Feauters from './components/Feauters';
 import TurnProfit from './components/TurnProfit';
 import Stats from './components/Stats';
 import Team from './components/Team';
-import EventUpload from './components/EventUpload';
+import EventUpload from './components/event-upload';
 import TicketView from './components/TicketView';
 import './style.css';
 

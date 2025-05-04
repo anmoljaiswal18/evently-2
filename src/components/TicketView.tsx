@@ -480,7 +480,7 @@ export default function EventsPage() {
           
           {/* Add a create event button that links to the event upload page */}
           <a 
-            href="/upload-event" 
+            href="/event-upload" 
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
