@@ -6,6 +6,7 @@ import Stats from './components/Stats';
 import Team from './components/Team';
 import EventUpload from './components/event-upload';
 import TicketView from './components/TicketView';
+import ReligiousPage from './pages/religiouspage';
 import './style.css';
 
 const HomePage = () => (
@@ -24,6 +25,7 @@ const App = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/event-upload" element={<EventUpload />} />
       <Route path="/ticket-view" element={<TicketView />} />
+      <Route path="/religious-page" element={<ReligiousPage />} />
     </Routes>
   );
 };

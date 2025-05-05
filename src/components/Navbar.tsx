@@ -51,8 +51,8 @@ const Navbar = () => {
 
         <nav className="hidden lg:flex gap-x-8">
           <Link to="/" className="text-white hover:text-yellow-400">Home</Link>
-          <Link to="/" className="text-white hover:text-yellow-400">Religious Event</Link>
-          <Link to="/" className="text-white hover:text-yellow-400">Sponsors For Event</Link>
+          <Link to="/religious-page" className="text-white hover:text-yellow-400">Religious Event</Link>
+          <Link to="/" className="text-white hover:text-yellow-400">Add Your Venue</Link>
           <Link to="/" className="text-white hover:text-yellow-400">Wall of Love</Link>
         </nav>
 

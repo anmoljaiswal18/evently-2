@@ -48,7 +48,7 @@ export default function EventsPage() {
                         city: "Mumbai",
                         state: "Maharashtra",
                         tag: "aarti",
-                        image: "/images/Ganeshji.webp",
+                        image: "/api/placeholder/800/400",
                     },
                     {
                         id: "2",
@@ -60,7 +60,7 @@ export default function EventsPage() {
                         city: "Delhi",
                         state: "Delhi",
                         tag: "holi",
-                        image: "/images/holi.webp",
+                        image: "/api/placeholder/800/400",
                     },
                     {
                         id: "3",
@@ -72,7 +72,7 @@ export default function EventsPage() {
                         city: "Bangalore",
                         state: "Karnataka",
                         tag: "music",
-                        image: "/images/Summer.avif",
+                        image: "/api/placeholder/800/400",
                     },
                     {
                         id: "4",
@@ -84,7 +84,7 @@ export default function EventsPage() {
                         city: "Chennai",
                         state: "Tamil Nadu",
                         tag: "diwali",
-                        image: "/images/diwali.jpg",
+                        image: "/api/placeholder/800/400",
                     },
                     {
                         id: "5",
@@ -96,7 +96,7 @@ export default function EventsPage() {
                         city: "Varanasi",
                         state: "Uttar Pradesh",
                         tag: "darshan",
-                        image: "/images/rammandir.jpeg",
+                        image: "/api/placeholder/800/400",
                     },
                     {
                         id: "6",
@@ -108,7 +108,7 @@ export default function EventsPage() {
                         city: "Hyderabad",
                         state: "Telangana",
                         tag: "conference",
-                        image: "/images/tech.jpeg",
+                        image: "/api/placeholder/800/400",
                     },
                     {
                         id: "7",
@@ -120,7 +120,7 @@ export default function EventsPage() {
                         city: "Pune",
                         state: "Maharashtra",
                         tag: "workshop",
-                        image: "/images/yoga.jpeg",
+                        image: "/api/placeholder/800/400",
                     },
                     {
                         id: "8",
@@ -132,7 +132,7 @@ export default function EventsPage() {
                         city: "Mumbai",
                         state: "Maharashtra",
                         tag: "music",
-                        image: "/images/classical.webp",
+                        image: "/api/placeholder/800/400",
                     },
                 ];
                 setEvents(sampleEvents);
