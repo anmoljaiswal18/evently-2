@@ -1,5 +1,6 @@
 import React from "react";
 import { FaFacebookF, FaLinkedin, FaInstagram, FaWhatsapp } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Footer() {
   return (
@@ -46,7 +47,7 @@ export default function Footer() {
 
             {/* Footer Links */}
             <div className="flex flex-wrap gap-3 text-sm text-gray-300">
-              <a href="#" className="hover:text-white">Competition</a>
+              <Link to="/feedbackupload" className="hover:text-white">Competition</Link>
               <a href="#" className="hover:text-white">Blog</a>
               <a href="#" className="hover:text-white">Privacy Policy</a>
               <a href="#" className="hover:text-white">Terms & Conditions</a>

@@ -1,7 +1,8 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const multer = require("multer");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -9,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static("uploads")); // Serve uploaded images
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
@@ -19,6 +21,18 @@ mongoose.connection.once("open", () => {
   console.log("✅ Connected to MongoDB");
 });
 
+// Multer setup for storing images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
+
 // User Schema
 const userSchema = new mongoose.Schema({
   userId: String,
@@ -28,7 +42,7 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model("User", userSchema);
 
-// Event Schema (added for the new API route)
+// Event Schema
 const eventSchema = new mongoose.Schema({
   name: String,
   description: String,
@@ -37,11 +51,11 @@ const eventSchema = new mongoose.Schema({
   date: String,
   price: Number,
   organizer: String,
-  bannerImage: String, // base64 or URL of image
+  bannerImage: String, // image file path
 });
 const Event = mongoose.model("Event", eventSchema);
 
-// Register Route (this remains as is)
+// Register Route
 app.post("/api/auth/register", async (req, res) => {
   const { userId, name, email, password } = req.body;
 
@@ -59,18 +73,10 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// Upload Event Route (added new route for uploading events)
-app.post("/api/uploadEvent", async (req, res) => {
-  const {
-    name,
-    description,
-    category,
-    location,
-    date,
-    price,
-    organizer,
-    bannerImage,
-  } = req.body;
+// Event Upload Route with Multer
+app.post("/api/event-upload", upload.single("bannerImage"), async (req, res) => {
+  const { name, description, category, location, date, price, organizer } = req.body;
+  const bannerImage = req.file?.path;
 
   try {
     if (!name || !description || !category || !location || !date || !organizer || !bannerImage) {
@@ -95,6 +101,18 @@ app.post("/api/uploadEvent", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// GET /api/events - Fetch all events
+app.get("/api/events", async (req, res) => {
+  try {
+    const events = await Event.find();
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
+
 
 // Start the server
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

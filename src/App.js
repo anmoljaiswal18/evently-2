@@ -9,8 +9,9 @@ import EventUpload from './components/event-upload';
 import TicketView from './components/TicketView';
 import ReligiousPage from './pages/religiouspage';
 import './style.css';
+import FeedbackPage from './pages/FeedbackPage';
 const HomePage = () => (_jsxs(_Fragment, { children: [_jsx(Herosection, {}), _jsx(Feauters, {}), _jsx(TurnProfit, {}), _jsx(Stats, {}), _jsx(Team, {})] }));
 const App = () => {
-    return (_jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(HomePage, {}) }), _jsx(Route, { path: "/event-upload", element: _jsx(EventUpload, {}) }), _jsx(Route, { path: "/ticket-view", element: _jsx(TicketView, {}) }), _jsx(Route, { path: "/religious-page", element: _jsx(ReligiousPage, {}) })] }));
+    return (_jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(HomePage, {}) }), _jsx(Route, { path: "/event-upload", element: _jsx(EventUpload, {}) }), _jsx(Route, { path: "/ticket-view", element: _jsx(TicketView, {}) }), _jsx(Route, { path: "/religious-page", element: _jsx(ReligiousPage, {}) }), _jsx(Route, { path: "/feedback-view", element: _jsx(FeedbackPage, {}) })] }));
 };
 export default App;

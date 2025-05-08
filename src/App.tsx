@@ -8,6 +8,7 @@ import EventUpload from './components/event-upload';
 import TicketView from './components/TicketView';
 import ReligiousPage from './pages/religiouspage';
 import './style.css';
+import FeedbackPage from './pages/FeedbackPage';
 
 const HomePage = () => (
   <>
@@ -26,6 +27,7 @@ const App = () => {
       <Route path="/event-upload" element={<EventUpload />} />
       <Route path="/ticket-view" element={<TicketView />} />
       <Route path="/religious-page" element={<ReligiousPage />} />
+      <Route path="/feedback-view" element={<FeedbackPage/>} />
     </Routes>
   );
 };

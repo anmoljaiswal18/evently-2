@@ -3,22 +3,18 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 export default function EventsPage() {
-    // Sample events data (in a real app, this would come from an API)
     const [events, setEvents] = useState([]);
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
-    // Filter states
     const [filters, setFilters] = useState({
         tag: "all",
         location: "all",
         dateRange: "all",
         sortBy: "date-asc",
     });
-    // Toggle states for mobile filters
     const [showFilters, setShowFilters] = useState(false);
-    // Available tags and locations (would be dynamic in a real app)
     const eventTags = [
         "all", "music", "holi", "diwali", "birthday",
         "aarti", "darshan", "festival", "concert",
@@ -28,115 +24,26 @@ export default function EventsPage() {
         "all", "Mumbai", "Delhi", "Bangalore", "Chennai",
         "Kolkata", "Hyderabad", "Pune", "Ahmedabad"
     ];
-    // Fetch events data
     useEffect(() => {
         const fetchEvents = async () => {
             try {
                 setLoading(true);
-                // In a real application, you would fetch from an API
-                // const response = await fetch('/api/events');
-                // const data = await response.json();
-                // For demo purposes, we'll create sample data
-                const sampleEvents = [
-                    {
-                        id: "1",
-                        name: "Divine Ganesh Aarti",
-                        description: "Join us for a spiritual evening celebrating Lord Ganesh with traditional aarti and prasad.",
-                        price: 0,
-                        startDate: "2025-05-10",
-                        endDate: "2025-05-10",
-                        city: "Mumbai",
-                        state: "Maharashtra",
-                        tag: "aarti",
-                        image: "/api/placeholder/800/400",
-                    },
-                    {
-                        id: "2",
-                        name: "Holi Festival of Colors",
-                        description: "Celebrate the joyous festival of Holi with colors, music, dance, and traditional sweets.",
-                        price: 500,
-                        startDate: "2025-03-25",
-                        endDate: "2025-03-25",
-                        city: "Delhi",
-                        state: "Delhi",
-                        tag: "holi",
-                        image: "/api/placeholder/800/400",
-                    },
-                    {
-                        id: "3",
-                        name: "Classical Music Concert",
-                        description: "Experience the magic of Indian classical music with renowned artists performing live.",
-                        price: 1200,
-                        startDate: "2025-06-15",
-                        endDate: "2025-06-15",
-                        city: "Bangalore",
-                        state: "Karnataka",
-                        tag: "music",
-                        image: "/api/placeholder/800/400",
-                    },
-                    {
-                        id: "4",
-                        name: "Diwali Light Festival",
-                        description: "Join the grand celebration of Diwali with lights, fireworks, and cultural performances.",
-                        price: 0,
-                        startDate: "2025-11-12",
-                        endDate: "2025-11-12",
-                        city: "Chennai",
-                        state: "Tamil Nadu",
-                        tag: "diwali",
-                        image: "/api/placeholder/800/400",
-                    },
-                    {
-                        id: "5",
-                        name: "Temple Darshan Tour",
-                        description: "A guided spiritual journey visiting the most sacred temples in the region.",
-                        price: 850,
-                        startDate: "2025-07-20",
-                        endDate: "2025-07-22",
-                        city: "Varanasi",
-                        state: "Uttar Pradesh",
-                        tag: "darshan",
-                        image: "/api/placeholder/800/400",
-                    },
-                    {
-                        id: "6",
-                        name: "Tech Conference 2025",
-                        description: "The biggest tech conference featuring the latest innovations and industry leaders.",
-                        price: 3500,
-                        startDate: "2025-09-05",
-                        endDate: "2025-09-07",
-                        city: "Hyderabad",
-                        state: "Telangana",
-                        tag: "conference",
-                        image: "/api/placeholder/800/400",
-                    },
-                    {
-                        id: "7",
-                        name: "Yoga & Meditation Workshop",
-                        description: "Learn authentic yoga and meditation techniques from experienced practitioners.",
-                        price: 750,
-                        startDate: "2025-05-30",
-                        endDate: "2025-05-31",
-                        city: "Pune",
-                        state: "Maharashtra",
-                        tag: "workshop",
-                        image: "/api/placeholder/800/400",
-                    },
-                    {
-                        id: "8",
-                        name: "Summer Music Festival",
-                        description: "Three days of non-stop music featuring top artists across various genres.",
-                        price: 2000,
-                        startDate: "2025-04-15",
-                        endDate: "2025-04-17",
-                        city: "Mumbai",
-                        state: "Maharashtra",
-                        tag: "music",
-                        image: "/api/placeholder/800/400",
-                    },
-                ];
-                setEvents(sampleEvents);
-                setFilteredEvents(sampleEvents);
+                const res = await fetch("http://localhost:5000/api/events");
+                const data = await res.json();
+                const mappedEvents = data.map((event) => ({
+                    id: event._id,
+                    name: event.name,
+                    description: event.description,
+                    price: event.price,
+                    startDate: event.date.split(" to ")[0],
+                    endDate: event.date.split(" to ")[1] || event.date.split(" to ")[0],
+                    city: event.location?.split(",")[0]?.trim() || "N/A",
+                    state: event.location?.split(",")[1]?.trim() || "N/A",
+                    tag: event.category,
+                    image: `http://localhost:5000/${event.bannerImage}`,
+                }));
+                setEvents(mappedEvents);
+                setFilteredEvents(mappedEvents);
                 setLoading(false);
             }
             catch (err) {
@@ -147,23 +54,18 @@ export default function EventsPage() {
         };
         fetchEvents();
     }, []);
-    // Apply filters
     useEffect(() => {
         let result = [...events];
-        // Apply search filter
         if (searchQuery) {
             result = result.filter(event => event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 event.description.toLowerCase().includes(searchQuery.toLowerCase()));
         }
-        // Apply tag filter
         if (filters.tag !== "all") {
             result = result.filter(event => event.tag === filters.tag);
         }
-        // Apply location filter
         if (filters.location !== "all") {
             result = result.filter(event => event.city === filters.location);
         }
-        // Apply date range filter
         if (filters.dateRange !== "all") {
             const today = new Date();
             const oneWeekLater = new Date();
@@ -191,7 +93,6 @@ export default function EventsPage() {
                     break;
             }
         }
-        // Apply sorting
         switch (filters.sortBy) {
             case "date-asc":
                 result.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
@@ -214,20 +115,14 @@ export default function EventsPage() {
         }
         setFilteredEvents(result);
     }, [events, filters, searchQuery]);
-    // Handle filter changes
     const handleFilterChange = (filterType, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [filterType]: value
-        }));
+        setFilters(prev => ({ ...prev, [filterType]: value }));
     };
-    // Format date for display
     const formatEventDate = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
-        if (startDate === endDate) {
+        if (startDate === endDate)
             return format(start, "MMM d, yyyy");
-        }
         if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
             return `${format(start, "MMM d")} - ${format(end, "d, yyyy")}`;
         }

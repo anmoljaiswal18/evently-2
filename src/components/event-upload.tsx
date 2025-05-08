@@ -10,7 +10,6 @@ interface EventData {
   city: string;
   state: string;
   tag: string;
-  bannerImage: string; // base64 string
 }
 
 interface SubmitMessage {
@@ -27,116 +26,102 @@ export default function EventUpload() {
     endDate: "",
     city: "",
     state: "",
-    tag: "music", // Default tag
-    bannerImage: "", // Empty string as default
+    tag: "music",
   });
 
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitMessage, setSubmitMessage] = useState<SubmitMessage>({ type: "", text: "" });
 
-  // Available event tags
   const eventTags: string[] = [
     "music", "holi", "diwali", "birthday", 
     "aarti", "darshan", "festival", "concert", 
     "conference", "workshop", "sports", "cultural"
   ];
 
-  // Handle input changes for text and number fields
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "price" ? Math.max(0, Number(value)) : value, // Prevent negative price
+      [name]: name === "price" ? Math.max(0, Number(value)) : value,
     }));
   };
 
-  // Handle file upload for banner image
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      
-      // Validate file type and size
       if (!["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
         setSubmitMessage({ type: "error", text: "❌ Only JPG, PNG, and GIF files are allowed." });
         return;
       }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         setSubmitMessage({ type: "error", text: "❌ File size must be less than 5MB." });
         return;
       }
 
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setFormData(prev => ({ 
-          ...prev, 
-          bannerImage: base64String 
-        }));
-        setImagePreview(base64String);
-      };
-      reader.readAsDataURL(file);
+      setBannerFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-        const res = await fetch("/api/event-upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
-        });
+      if (!bannerFile) {
+        setSubmitMessage({ type: "error", text: "❌ Please upload a banner image." });
+        return;
+      }
 
-        // Check if the response is OK (status 2xx)
-        if (!res.ok) {
-            // If the server responds with an error status (non-2xx), show an error message
-            setSubmitMessage({ type: "error", text: `❌ Error: ${res.statusText}` });
-            return;
-        }
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("price", formData.price.toString());
+      formDataToSend.append("date", `${formData.startDate} to ${formData.endDate}`);
+      formDataToSend.append("location", `${formData.city}, ${formData.state}`);
+      formDataToSend.append("category", formData.tag);
+      formDataToSend.append("organizer", "admin"); // Replace with actual user if needed
+      formDataToSend.append("bannerImage", bannerFile);
 
-        // Try parsing the response as JSON only if it's a valid response
-        const result = await res.json().catch((error) => {
-            // If parsing the response as JSON fails, handle the error
-            setSubmitMessage({ type: "error", text: "❌ Invalid response format." });
-            throw error;  // Rethrow the error to stop further execution
-        });
+      const res = await fetch("http://localhost:5000/api/event-upload", {
+        method: "POST",
+        body: formDataToSend,
+      });
 
-        // Handle the successful response
-        setSubmitMessage({ type: "success", text: "✅ " + result.message });
+      if (!res.ok) {
+        setSubmitMessage({ type: "error", text: `❌ Error: ${res.statusText}` });
+        return;
+      }
 
-        // Reset form after successful submission
-        setFormData({
-            name: "",
-            description: "",
-            price: 0,
-            startDate: "",
-            endDate: "",
-            city: "",
-            state: "",
-            tag: "music",
-            bannerImage: ""
-        });
-        setImagePreview("");
+      const result = await res.json();
+      setSubmitMessage({ type: "success", text: "✅ " + result.message });
+
+      setFormData({
+        name: "",
+        description: "",
+        price: 0,
+        startDate: "",
+        endDate: "",
+        city: "",
+        state: "",
+        tag: "music",
+      });
+      setBannerFile(null);
+      setImagePreview("");
 
     } catch (error) {
-        console.error("Error uploading event:", error);
-        // Display a generic error message if something goes wrong
-        setSubmitMessage({ type: "error", text: "❌ Error uploading event." });
+      console.error("Error uploading event:", error);
+      setSubmitMessage({ type: "error", text: "❌ Error uploading event." });
     } finally {
-        setIsSubmitting(false);
-        setTimeout(() => setSubmitMessage({ type: "", text: "" }), 5000);
+      setIsSubmitting(false);
+      setTimeout(() => setSubmitMessage({ type: "", text: "" }), 5000);
     }
-};
-
-  
+  };
 
   return (
     <div className="relative overflow-auto w-full min-h-screen flex justify-center items-center py-8 mt-10">
-      {/* Video Background */}
       <video
         autoPlay
         muted
@@ -147,15 +132,12 @@ export default function EventUpload() {
       </video>
 
       <div className="max-w-3xl w-full z-10 px-4">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white">Create Your Event</h1>
           <p className="text-gray-200 mt-2">Fill in the details to share your event with others</p>
         </div>
 
-        {/* Form Card */}
         <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden">
-          {/* Banner Preview */}
           <div className="h-52 bg-gradient-to-r from-blue-500/20 to-purple-500/20 relative flex items-center justify-center">
             {imagePreview ? (
               <img 
@@ -175,9 +157,7 @@ export default function EventUpload() {
             )}
           </div>
 
-          {/* Form Content */}
           <form onSubmit={handleSubmit} className="p-6">
-            {/* Success/Error Message */}
             {submitMessage.text && (
               <div className={`mb-4 p-3 rounded-lg text-center ${
                 submitMessage.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
@@ -187,95 +167,77 @@ export default function EventUpload() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Event Name */}
               <div className="md:col-span-2">
-                <label className="block text-gray-700 font-medium mb-2">
-                  Event Name
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">Event Name</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                  placeholder="Enter a catchy name for your event"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
+                  placeholder="Enter a catchy name"
                   required
                 />
               </div>
 
-              {/* Description */}
               <div className="md:col-span-2">
-                <label className="block text-gray-700 font-medium mb-2">
-                  Description
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Describe your event, activities, highlights, etc."
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
+                  placeholder="Describe your event"
                   required
                 />
               </div>
 
-              {/* Dates */}
               <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Start Date
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">Start Date</label>
                 <input
                   type="date"
                   name="startDate"
                   value={formData.startDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  End Date
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">End Date</label>
                 <input
                   type="date"
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
                   required
                 />
               </div>
 
-              {/* Price */}
               <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Price (₹)
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">Price (₹)</label>
                 <input
                   type="number"
                   name="price"
                   value={formData.price}
                   onChange={handleChange}
                   min="0"
-                  step="1"
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0 for free events"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
+                  placeholder="0 for free"
                   required
                 />
               </div>
 
-              {/* Tag Selection */}
               <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Event Tag
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">Event Tag</label>
                 <select
                   name="tag"
                   value={formData.tag}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
                   required
                 >
                   {eventTags.map(tag => (
@@ -286,52 +248,43 @@ export default function EventUpload() {
                 </select>
               </div>
 
-              {/* Location */}
               <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  State
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">State</label>
                 <input
                   type="text"
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
                   placeholder="Enter state"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  City
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">City</label>
                 <input
                   type="text"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
                   placeholder="Enter city"
                   required
                 />
               </div>
 
-              {/* Image Upload */}
               <div className="md:col-span-2">
-                <label className="block text-gray-700 font-medium mb-2">
-                  Event Banner Image
-                </label>
+                <label className="block text-gray-700 font-medium mb-2">Event Banner Image</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
-                  className="w-full px-4 py-3 rounded-lg border border-black text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 rounded-lg border border-black text-gray-600"
                 />
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}

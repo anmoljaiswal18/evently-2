@@ -53,7 +53,7 @@ const Navbar = () => {
           <Link to="/" className="text-white hover:text-yellow-400">Home</Link>
           <Link to="/religious-page" className="text-white hover:text-yellow-400">Religious Event</Link>
           <Link to="/" className="text-white hover:text-yellow-400">Add Your Venue</Link>
-          <Link to="/" className="text-white hover:text-yellow-400">Wall of Love</Link>
+          <Link to="/feedback-view" className="text-white hover:text-yellow-400">Wall of Love</Link>
         </nav>
 
         <div className="hidden lg:flex gap-x-4">
@@ -105,9 +105,9 @@ const Navbar = () => {
           </button>
           <nav className="flex flex-col space-y-4">
             <Link to="/" className="text-white hover:text-yellow-400">Home</Link>
-            <Link to="/" className="text-white hover:text-yellow-400">Religious Event</Link>
-            <Link to="/" className="text-white hover:text-yellow-400">Sponsors For Event</Link>
-            <Link to="/" className="text-white hover:text-yellow-400">Wall of Love</Link>
+            <Link to="/religious-page" className="text-white hover:text-yellow-400">Religious Event</Link>
+            <Link to="/" className="text-white hover:text-yellow-400">Add Your Venue</Link>
+            <Link to="/feedback-view" className="text-white hover:text-yellow-400">Wall of Love</Link>
           </nav>
           <div className="mt-auto flex flex-col gap-2">
             {user ? (
